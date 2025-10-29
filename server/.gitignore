@@ -1,0 +1,95 @@
+# ========================
+# FASTAPI PROJECT GITIGNORE
+# ========================
+
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*$py.class
+
+# ---- Virtual Environments ----
+venv/
+.env/
+env/
+ENV/
+.venv/
+env.bak/
+
+# ---- Environment Variables ----
+# (Never commit secret keys or credentials)
+*.env
+*.env.*
+
+# ---- Dependencies ----
+# Use requirements.txt or pyproject.toml instead
+pip-wheel-metadata/
+pip-log.txt
+*.egg-info/
+.eggs/
+*.egg
+
+# ---- Build / Distribution ----
+build/
+dist/
+*.manifest
+*.spec
+
+# ---- Logs ----
+*.log
+*.out
+*.err
+
+# ---- Unit Test / Coverage ----
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+pytest_cache/
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+
+# ---- Jupyter / IPython ----
+.ipynb_checkpoints/
+profile_default/
+ipython_config.py
+
+# ---- Editor / IDE ----
+.vscode/
+.idea/
+*.swp
+*.swo
+*.bak
+
+# ---- OS Files ----
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ---- Docker ----
+*.pid
+*.seed
+docker-compose.override.yml
+.dockerignore
+
+# ---- PyInstaller ----
+# Usually contains temp build artifacts
+*.manifest
+*.spec
+
+# ---- FastAPI specific ----
+# Uvicorn reload cache
+.reload/
+# SQLite DB (optional)
+*.db
+*.sqlite3
+
+# ---- Misc ----
+# Local tooling or temporary data
+temp/
+tmp/
+__temp__/
+*.tmp
