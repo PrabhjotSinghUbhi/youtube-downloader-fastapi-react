@@ -39,6 +39,7 @@ dist/
 *.log
 *.out
 *.err
+*.vscode/
 
 # ---- Unit Test / Coverage ----
 htmlcov/
