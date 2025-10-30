@@ -18,6 +18,7 @@ function YouTubeDownloader() {
     const [url, setUrl] = useState("");
     const [selectedFormat, setSelectedFormat] = useState("video");
     const [loading, setLoading] = useState(false);
+    const [downloading, setDownloading] = useState(false);
     const [status, setStatus] = useState(null);
     const [videoData, setVideoData] = useState(null);
 
@@ -70,7 +71,7 @@ function YouTubeDownloader() {
             return;
         }
 
-        setLoading(true);
+        setDownloading(true);
         setStatus(null);
 
         try {
@@ -106,7 +107,7 @@ function YouTubeDownloader() {
             console.error(err);
             alert("Something went wrong during download.");
         } finally {
-            setLoading(false);
+            setDownloading(false);
         }
     };
 
@@ -185,7 +186,7 @@ function YouTubeDownloader() {
                             videoData={videoData}
                             selectedFormat={selectedFormat}
                             onDownload={handleDownload}
-                            loading={loading}
+                            loading={downloading}
                         />
                     </div>
                 )}
