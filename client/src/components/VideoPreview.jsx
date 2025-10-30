@@ -74,20 +74,20 @@ export const VideoPreview = ({
         <div className="p-6">
             {/* Title */}
             <h3 className="font-bold text-gray-900 text-xl mb-3 leading-tight">
-                {videoData.title}
+                {videoData?.title}
             </h3>
 
             {/* Channel Info */}
             <div className="flex items-center gap-3 mb-4 pb-4 border-b border-gray-200">
                 <div className="w-10 h-10 bg-red-600 rounded-full flex items-center justify-center text-white font-bold">
-                    {videoData.uploader.charAt(0)}
+                    {videoData?.uploader?.charAt(0)}
                 </div>
                 <div>
                     <p className="font-semibold text-gray-900">
-                        {videoData.uploader}
+                        {videoData?.uploader}
                     </p>
                     <p className="text-sm text-gray-600">
-                        {videoData.subscribers} subscribers
+                        {videoData?.subscribers} subscribers
                     </p>
                 </div>
             </div>
@@ -134,12 +134,12 @@ export const VideoPreview = ({
                 {loading ? (
                     <>
                         <Loader2 className="w-5 h-5 animate-spin" />
-                        Processing...
+                        Downloading...
                     </>
                 ) : (
                     <>
                         <Download className="w-5 h-5" />
-                        Download
+                        Download {selectedFormat}
                     </>
                 )}
             </button>
