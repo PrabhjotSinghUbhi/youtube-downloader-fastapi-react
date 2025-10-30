@@ -98,17 +98,31 @@ def download_video(url: str = Form(...), kind: str = Form("video")):
     output_path = os.path.join(output_dir, f"{download_id}.%(ext)s")
 
     ydl_opts = {
-        "format": "bestvideo+bestaudio/best" if kind == "video" else "bestaudi  o/best",
+        "format": "bestvideo+bestaudio/best" if kind == "video" else "bestaudio/best",
         "outtmpl": output_path,
         "quiet": True,
         "ffmpeg_location": r"D:\Downloads\myDownloads\ffmpeg\bin",  # path if needed
         "noplaylist": True,
     }
 
+    if kind == "thumbnail":
+        ydl_opts.update({
+            "skip_download": True,
+            "writethumbnail": True,
+        })
+
     try:
         with YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=True)
             filename = ydl.prepare_filename(info)
+
+            if kind == "thumbnail":
+                thumb_exts = [".jpg", ".png", ".webp"]
+                for ext in thumb_exts:
+                    possible_thumb = filename.rsplit(".", 1)[0] + ext
+                    if os.path.exists(possible_thumb):
+                        filename = possible_thumb
+                        break
     except Exception as e:
         raise HTTPException(
             status_code=400, detail=f"Download failed: {str(e)}")
