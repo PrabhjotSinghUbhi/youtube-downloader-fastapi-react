@@ -62,7 +62,7 @@ def my_hook(d):
     """Tracks the Progress of the video being downloaded from yt-dlp.
 
     Args:
-        d (Dictionary): 
+        d (Dictionary):
         {
             'status': 'downloading',
             '_percent_str': ' 42.3%',
@@ -155,13 +155,14 @@ def build_ydl_opts(output_template: str, kind: str):
 
 
 @app.post("/download")
-def download_video(url: str = Form(...), kind: str = Form("video")):
+def download_video(background_tasks: BackgroundTasks, url: str = Form(...), kind: str = Form("video")):
     """
         url and kind are form fields -> (data sent by the frontend using FormData or HTML forms).
         Form(...) tells FastAPI to read these values from form input, not JSON.
         The "..." means the url field is required.
         kind defaults to "video" — you can also send "audio" if you want to download only audio.
     """
+    print("DOWNLOADED GOT CALLED --------------------------------------------------")
     download_id = str(
         uuid.uuid4())  # uuid.uuid4() generates a unique random identifier,
 
@@ -172,18 +173,10 @@ def download_video(url: str = Form(...), kind: str = Form("video")):
     # creates the folder if it doesn’t already exist, so the app won’t crash if it’s already there.
     # %(ext)s part is a yt-dlp template placeholder that gets replaced with the actual file extension (.mp4, .mp3, etc.) once the download finishes.
     output_path = os.path.join(output_dir, f"{download_id}.%(ext)s")
+    print(output_path)
+    print(output_dir)
 
-    ydl_opts = {
-        "format": "bestvideo+bestaudio/best" if kind == "video" else "bestaudio/best",
-
-        # File path template (the one you created above).
-        "outtmpl": output_path,
-
-        "quiet": True,
-        "ffmpeg_location": r"D:\Downloads\myDownloads\ffmpeg\bin",  # path if needed
-        "noplaylist": True,
-    }
-
+    ydl_opts = build_ydl_opts(output_path, kind)
     try:
         # Creates a YoutubeDL object using your options.
         with YoutubeDL(ydl_opts) as ydl:
@@ -191,11 +184,10 @@ def download_video(url: str = Form(...), kind: str = Form("video")):
             # -> url → the YouTube link.
             # -> download=True → actually downloads the file (if False, it only fetches metadata).
             info = ydl.extract_info(url, download=True)
-            print(info)
 
             # This converts the info into the final file path (e.g. downloads/6f9b9e7e.mp4).
             filename = ydl.prepare_filename(info)
-            print(filename)
+            print("FIlename: --- ", filename)
 
     except Exception as e:
         print(e)
@@ -203,6 +195,7 @@ def download_video(url: str = Form(...), kind: str = Form("video")):
             status_code=400, detail=f"Download failed: {str(e)}")
 
     # FileResponse is a FastAPI class that sends a file as a response so the browser downloads it directly.
+    background_tasks.add_task(cleanup_path, filename)
     return FileResponse(filename, filename=os.path.basename(filename))
 
 
