@@ -1,6 +1,5 @@
 import os
 import shutil
-import tempfile
 import uuid
 from fastapi import FastAPI, Form, HTTPException, BackgroundTasks, Query
 from fastapi.responses import FileResponse, HTMLResponse
@@ -23,16 +22,7 @@ def root():
     return """
     <html>
         <body>
-        <h2>YouTube Downloader (FastAPI + yt-dlp)</h2>
-        <form action="/download" method="post">
-            URL: <input name="url" type="text" style="width:400px"/><br/>
-            Type:
-            <select name="kind">
-            <option value="video">Video (mp4)</option>
-            <option value="audio">Audio (mp3)</option>
-            </select><br/><br/>
-            <button type="submit">Download</button>
-        </form>
+        <h2>YouTube Downloader (FastAPI + yt-dlp) root working</h2>
         </body>
     </html>"""
 

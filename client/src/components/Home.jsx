@@ -4,10 +4,7 @@ import {
     Video,
     Music,
     Image,
-    Check,
-    AlertCircle,
     Loader2,
-    Icon,
 } from "lucide-react";
 import Header from "./Header";
 import { FormatCard } from "./FormatCard";
@@ -99,7 +96,7 @@ function YouTubeDownloader() {
             // Trigger browser download
             const a = document.createElement("a");
             a.href = downloadUrl;
-            a.download = selectedFormat === "video" ? "video.mp4" : "audio.mp3";
+            a.download = selectedFormat === "video" ? "video.mp4" : selectedFormat === "audio" ? "audio.mp3" : "thumbnail.webp";
             document.body.appendChild(a);
             a.click();
             a.remove();
