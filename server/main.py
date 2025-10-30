@@ -155,48 +155,62 @@ def build_ydl_opts(output_template: str, kind: str):
 
 
 @app.post("/download")
-def download_video(background_tasks: BackgroundTasks, url: str = Form(...), kind: str = Form("video")):
-    """
-        url and kind are form fields -> (data sent by the frontend using FormData or HTML forms).
-        Form(...) tells FastAPI to read these values from form input, not JSON.
-        The "..." means the url field is required.
-        kind defaults to "video" — you can also send "audio" if you want to download only audio.
-    """
-    print("DOWNLOADED GOT CALLED --------------------------------------------------")
-    download_id = str(
-        uuid.uuid4())  # uuid.uuid4() generates a unique random identifier,
-
+def download_video(url: str = Form(...), kind: str = Form("video"), background_tasks: BackgroundTasks = None):
+    download_id = str(uuid.uuid4())
     output_dir = "downloads"
-
-    # Sets the folder name where files will be saved.
     os.makedirs(output_dir, exist_ok=True)
-    # creates the folder if it doesn’t already exist, so the app won’t crash if it’s already there.
-    # %(ext)s part is a yt-dlp template placeholder that gets replaced with the actual file extension (.mp4, .mp3, etc.) once the download finishes.
     output_path = os.path.join(output_dir, f"{download_id}.%(ext)s")
-    print(output_path)
-    print(output_dir)
 
-    ydl_opts = build_ydl_opts(output_path, kind)
-    try:
-        # Creates a YoutubeDL object using your options.
-        with YoutubeDL(ydl_opts) as ydl:
-            # Calls extract_info()
-            # -> url → the YouTube link.
-            # -> download=True → actually downloads the file (if False, it only fetches metadata).
-            info = ydl.extract_info(url, download=True)
+    if kind == "video":
+        ydl_opts = {
+            "format": "bestvideo+bestaudio/best",
+            "outtmpl": output_path,
+            "quiet": True,
+            "ffmpeg_location": r"D:\Downloads\myDownloads\ffmpeg\bin",
+            "noplaylist": True,
+        }
+    elif kind == "audio":
+        ydl_opts = {
+            "format": "bestaudio/best",
+            "outtmpl": output_path,
+            "quiet": True,
+            "ffmpeg_location": r"D:\Downloads\myDownloads\ffmpeg\bin",
+            "noplaylist": True,
+        }
+    elif kind == "thumbnail":
+        ydl_opts = {
+            "skip_download": True,      # only download metadata, not video/audio
+            "writeinfojson": False,     # no .json file
+            "writethumbnail": True,     # <-- actually download the thumbnail
+            "outtmpl": output_path,
+            "quiet": True,
+        }
+    else:
+        raise HTTPException(status_code=400, detail="Invalid kind parameter")
 
-            # This converts the info into the final file path (e.g. downloads/6f9b9e7e.mp4).
-            filename = ydl.prepare_filename(info)
-            print("FIlename: --- ", filename)
+    with YoutubeDL(ydl_opts) as ydl:
+        info = ydl.extract_info(url, download=True)
 
-    except Exception as e:
-        print(e)
-        raise HTTPException(
-            status_code=400, detail=f"Download failed: {str(e)}")
+        if kind == "thumbnail":
+            # yt-dlp saves thumbnail as .jpg or .webp next to outtmpl
+            thumbnail_path = None
+            for ext in ("jpg", "png", "webp"):
+                test_path = output_path.replace("%(ext)s", ext)
+                if os.path.exists(test_path):
+                    thumbnail_path = test_path
+                    break
+            if not thumbnail_path:
+                raise HTTPException(
+                    status_code=404, detail="Thumbnail not found")
+            if background_tasks:
+                background_tasks.add_task(cleanup_path, thumbnail_path)
+            return FileResponse(thumbnail_path, filename=os.path.basename(thumbnail_path))
 
-    # FileResponse is a FastAPI class that sends a file as a response so the browser downloads it directly.
-    background_tasks.add_task(cleanup_path, filename)
-    return FileResponse(filename, filename=os.path.basename(filename))
+        # otherwise handle video/audio
+        filename = ydl.prepare_filename(info)
+        if background_tasks:
+            background_tasks.add_task(cleanup_path, filename)
+        return FileResponse(filename, filename=os.path.basename(filename))
 
 
 @app.get("/video-info")
