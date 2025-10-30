@@ -19,6 +19,7 @@ env.bak/
 # (Never commit secret keys or credentials)
 *.env
 *.env.*
+downloads
 
 # ---- Dependencies ----
 # Use requirements.txt or pyproject.toml instead
