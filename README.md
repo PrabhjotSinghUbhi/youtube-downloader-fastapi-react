@@ -7,23 +7,23 @@ Built using **FastAPI** for the backend and **React** for the frontend.
 
 ## 🚀 Features
 
-- 🎧 Download **audio (MP3)** or **video (MP4)** formats  
-- 🖼️ Fetch video **title, thumbnail, uploader, and duration**  
-- 🌐 Fast and lightweight **FastAPI backend**  
-- ⚛️ Simple and responsive **React frontend**  
-- 💾 Direct browser download (no annoying file popups)  
+- 🎧 Download **audio (MP3)** or **video (MP4)** formats
+- 🖼️ Fetch video **title, thumbnail, uploader, and duration**
+- 🌐 Fast and lightweight **FastAPI backend**
+- ⚛️ Simple and responsive **React frontend**
+- 💾 Direct browser download (no annoying file popups)
 
 ---
 
 ## 🏗️ Tech Stack
 
-| Layer | Technology |
-|-------|-------------|
-| **Frontend** | React (Vite or CRA) |
-| **Backend** | FastAPI (Python) |
-| **Downloader Engine** | yt-dlp + ffmpeg |
-| **HTTP Client** | Axios / Fetch |
-| **Runtime** | Node.js & Python 3.10+ |
+| Layer                 | Technology             |
+| --------------------- | ---------------------- |
+| **Frontend**          | React (Vite or CRA)    |
+| **Backend**           | FastAPI (Python)       |
+| **Downloader Engine** | yt-dlp + ffmpeg        |
+| **HTTP Client**       | Axios / Fetch          |
+| **Runtime**           | Node.js & Python 3.10+ |
 
 ---
 
@@ -63,6 +63,7 @@ cd youtube-downloader-fastapi-react
 ### 2. Backend Setup (FastAPI)
 
 #### 🐍 Create Virtual Environment
+
 ```bash
 cd backend
 python -m venv venv
@@ -71,14 +72,17 @@ venv\Scripts\activate      # for Windows
 ```
 
 #### 📦 Install Dependencies
+
 ```bash
-pip install fastapi uvicorn yt-dlp ffmpeg-python
+pip install fastapi uvicorn yt-dlp ffmpeg-python python-multipart
 ```
 
 #### ▶️ Run the Backend
+
 ```bash
 uvicorn main:app --reload
 ```
+
 By default, it runs at: **http://localhost:8000**
 
 ---
@@ -97,36 +101,46 @@ React will start on **http://localhost:5173** (or similar port).
 
 ## 🔄 How It Works
 
-1. User enters a **YouTube video URL** in the React app.  
+1. User enters a **YouTube video URL** in the React app.
 2. The frontend calls the FastAPI backend:
-   - `/video-info` → Fetches video title, thumbnail, duration, etc.  
-   - `/download` → Downloads audio/video and triggers browser download.  
-3. FastAPI uses **yt-dlp** internally (and **ffmpeg** for audio extraction).  
+   - `/video-info` → Fetches video title, thumbnail, duration, etc.
+   - `/download` → Downloads audio/video and triggers browser download.
+3. FastAPI uses **yt-dlp** internally (and **ffmpeg** for audio extraction).
 
 ---
 
 ## 🧠 Example API Routes
 
-| Route | Method | Description |
-|--------|---------|-------------|
-| `/video-info?url=...` | GET | Fetch video details |
-| `/download?url=...&format=video` | GET | Download MP4 video |
-| `/download?url=...&format=audio` | GET | Download MP3 audio |
+| Route                            | Method | Description         |
+| -------------------------------- | ------ | ------------------- |
+| `/video-info?url=...`            | GET    | Fetch video details |
+| `/download?url=...&format=video` | GET    | Download MP4 video  |
+| `/download?url=...&format=audio` | GET    | Download MP3 audio  |
 
 ---
 
 ## 🖼️ UI Preview
 
-*(Add screenshots here once your frontend UI is ready!)*
+- Mobile preview
+
+  ![Screenshot](https://github.com/PrabhjotSinghUbhi/youtube-downloader-fastapi-react/main/branding/mobile-preview-screenshot.png)
+
+- Desktop preview
+
+  ![Screenshot](https://github.com/PrabhjotSinghUbhi/youtube-downloader-fastapi-react/main/branding/desktop-preview-screenshot.png)
+
+- sample preview
+
+  ![Screenshot](https://github.com/PrabhjotSinghUbhi/youtube-downloader-fastapi-react/main/branding/screenshot1.png)
 
 ---
 
 ## 💡 Future Enhancements
 
-- ⏱️ Show download progress bar  
-- 📱 Make the UI mobile-friendly  
-- 🗃️ Add format/quality selector (360p, 720p, etc.)  
-- 🌍 Deploy backend to Render / Railway and frontend to Vercel  
+- ⏱️ Show download progress bar
+- 📱 Make the UI mobile-friendly
+- 🗃️ Add format/quality selector (360p, 720p, etc.)
+- 🌍 Deploy backend to Render / Railway and frontend to Vercel
 
 ---
 
@@ -139,4 +153,5 @@ Software Engineer | Web Developer | MERN + FastAPI Enthusiast
 ---
 
 ## ⚠️ Disclaimer
+
 This project is for **educational purposes only**. Downloading copyrighted content without permission may violate YouTube’s Terms of Service.
