@@ -5,8 +5,11 @@ from fastapi import FastAPI, Form, HTTPException, BackgroundTasks, Query
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 from yt_dlp import YoutubeDL
+from dotenv import load_dotenv
+load_dotenv()
 
 app = FastAPI(title="Youtube Downloader")
+cookie_path = os.getenv("COOKIE_PATH", "cookies.txt")
 
 app.add_middleware(
     CORSMiddleware,
@@ -67,84 +70,6 @@ def my_hook(d):
         print("Downloaded", d.get('_percent_str'))
     elif d['status'] == 'finished':
         print("Finished, now post-processing")
-
-
-def build_ydl_opts(output_template: str, kind: str):
-    """
-    Return yt-dlp options.
-    output_template: path template like '/tmp/downloads/%(title)s.%(ext)s'
-    kind: 'video' or 'audio'
-    """
-    opts = {
-        # the output filename template.
-        'outtmpl': output_template,
-
-        # force downloading a single video only, even if the URL points to a playlist. Prevents yt-dlp from iterating over playlist items.
-        'noplaylist': True,
-
-        # suppress most yt-dlp console output. Useful when you want only your progress hook messages or silent operation.
-        'quiet': True,
-
-        # suppress non-fatal warnings.
-        'no_warnings': True,
-
-        # number of times to retry entire download if it fails. This is a top-level retries count.
-        'retries': 5,             # retry up to 5 times
-
-        # how many seconds to wait for network/socket operations before timing out (units = seconds). Helps avoid hanging on slow connections.
-        'socket_timeout': 30,     # wait up to 30s per connection
-
-        # for fragmented downloads (e.g., DASH/HLS segments), retry up to this many times per fragment. Useful for unstable network or missing fragments.
-        'fragment_retries': 10,   # retry on partial download
-
-        # if some fragments are unavailable (e.g., temporarily missing), skip them instead of failing the whole download. May produce broken output if too many fragments are missing, but increases robustness.
-        'skip_unavailable_fragments': True,
-
-        # This is a format selection expression that tells yt-dlp which stream(s) to pick.
-        'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/worst',
-
-        # Where yt-dlp will look for ffmpeg/ffprobe binaries to merge or postprocess files.
-        'ffmpeg_location': r"D:\Downloads\myDownloads\ffmpeg\bin",
-
-        # A list of callables that yt-dlp will invoke with a status dictionary during the download lifecycle.
-        'progress_hooks': [my_hook],
-
-        #  also download thumbnails
-        'writethumbnail': True,
-    }
-
-    if kind == 'audio':
-        # postprocessor to extract audio and convert to mp3
-        # a list of postprocessor dicts. yt-dlp runs them after downloading (and after merging if needed).
-        opts.update({
-            'postprocessors': [{
-                # tells yt-dlp to run ffmpeg to extract audio from the downloaded file(s).
-                'key': 'FFmpegExtractAudio',
-
-                # convert audio to MP3 format.
-                'preferredcodec': 'mp3',
-
-                # target bitrate for MP3 is 192 kbps. (yt-dlp/ffmpeg interpret this as kbps for most audio converters.)
-                'preferredquality': '192',
-            }, {
-                'key': 'EmbedThumbnail'
-            }, {
-                'key': 'FFmpegMetadata'
-            }],
-            # result file ext will be .mp3 due to postprocessor
-        })
-    else:
-        # for video, optionally convert thumbnail to jpg
-        opts.update({
-            'postprocessors': [
-                {
-                    'key': 'FFmpegThumbnailsConvertor',
-                    'format': 'jpg',
-                }
-            ]
-        })
-
-    return opts
 
 
 @app.post("/download")
