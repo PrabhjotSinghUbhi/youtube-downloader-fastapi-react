@@ -2,6 +2,7 @@
 builder = "NIXPACKS"
 buildCommand = "pip install -r requirements.txt"
 startCommand = "uvicorn main:app --host 0.0.0.0 --port $PORT"
+nixpacksPkgs = ["ffmpeg"]
 
 [deploy]
 path = "server"
