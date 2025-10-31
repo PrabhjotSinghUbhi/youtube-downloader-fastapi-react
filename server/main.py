@@ -158,6 +158,7 @@ def download_video(url: str = Form(...), kind: str = Form("video"), background_t
             "quiet": True,
             "ffmpeg_location": r"D:\Downloads\myDownloads\ffmpeg\bin",
             "noplaylist": True,
+
         }
     elif kind == "audio":
         ydl_opts = {
@@ -166,6 +167,20 @@ def download_video(url: str = Form(...), kind: str = Form("video"), background_t
             "quiet": True,
             "ffmpeg_location": r"D:\Downloads\myDownloads\ffmpeg\bin",
             "noplaylist": True,
+            'postprocessors': [{
+                # tells yt-dlp to run ffmpeg to extract audio from the downloaded file(s).
+                'key': 'FFmpegExtractAudio',
+
+                # convert audio to MP3 format.
+                'preferredcodec': 'mp3',
+
+                # target bitrate for MP3 is 192 kbps. (yt-dlp/ffmpeg interpret this as kbps for most audio converters.)
+                'preferredquality': '192',
+            }, {
+                'key': 'EmbedThumbnail'
+            }, {
+                'key': 'FFmpegMetadata'
+            }],
         }
     elif kind == "thumbnail":
         ydl_opts = {
@@ -174,6 +189,12 @@ def download_video(url: str = Form(...), kind: str = Form("video"), background_t
             "writethumbnail": True,     # <-- actually download the thumbnail
             "outtmpl": output_path,
             "quiet": True,
+            'postprocessors': [
+                {
+                    'key': 'FFmpegThumbnailsConvertor',
+                    'format': 'jpg',
+                }
+            ]
         }
     else:
         raise HTTPException(status_code=400, detail="Invalid kind parameter")

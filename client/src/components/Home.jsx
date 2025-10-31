@@ -99,6 +99,8 @@ function YouTubeDownloader() {
             document.body.appendChild(a);
             a.click();
             a.remove();
+
+            URL.revokeObjectURL(downloadUrl);
         } catch (err) {
             console.error(err);
             alert("Something went wrong during download.");
