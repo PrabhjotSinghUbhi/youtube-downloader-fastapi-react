@@ -2,7 +2,7 @@ import os
 import shutil
 import uuid
 from fastapi import FastAPI, Form, HTTPException, BackgroundTasks, Query
-from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse, StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from yt_dlp import YoutubeDL
 from dotenv import load_dotenv
@@ -79,22 +79,22 @@ def download_video(url: str = Form(...), kind: str = Form("video"), background_t
     os.makedirs(output_dir, exist_ok=True)
     output_path = os.path.join(output_dir, f"{download_id}.%(ext)s")
 
+    # Decode cookies from environment (base64)
     encoded_cookies = os.getenv("COOKIE_CONTENT")
-
     if encoded_cookies:
         cookies_path = "cookies.txt"
         with open(cookies_path, "wb") as f:
             f.write(base64.b64decode(encoded_cookies))
     else:
-        cookies_path = None  # fallback if not set
+        cookies_path = None
 
+    # yt-dlp options
     if kind == "video":
         ydl_opts = {
             "cookiefile": cookies_path,
             "format": "bestvideo+bestaudio/best",
             "outtmpl": output_path,
             "quiet": True,
-            # "ffmpeg_location": r"D:\Downloads\myDownloads\ffmpeg\bin",
             "noplaylist": True
         }
     elif kind == "audio":
@@ -103,64 +103,90 @@ def download_video(url: str = Form(...), kind: str = Form("video"), background_t
             "format": "bestaudio/best",
             "outtmpl": output_path,
             "quiet": True,
-            # "ffmpeg_location": r"D:\Downloads\myDownloads\ffmpeg\bin",
             "noplaylist": True,
-            'postprocessors': [{
-                # tells yt-dlp to run ffmpeg to extract audio from the downloaded file(s).
-                'key': 'FFmpegExtractAudio',
-
-                # convert audio to MP3 format.
-                'preferredcodec': 'mp3',
-
-                # target bitrate for MP3 is 192 kbps. (yt-dlp/ffmpeg interpret this as kbps for most audio converters.)
-                'preferredquality': '192',
+            "postprocessors": [{
+                "key": "FFmpegExtractAudio",
+                "preferredcodec": "mp3",
+                "preferredquality": "192",
             }, {
-                'key': 'EmbedThumbnail'
+                "key": "EmbedThumbnail"
             }, {
-                'key': 'FFmpegMetadata'
+                "key": "FFmpegMetadata"
             }],
         }
     elif kind == "thumbnail":
         ydl_opts = {
             "cookiefile": cookies_path,
-            "skip_download": True,      # only download metadata, not video/audio
-            "writeinfojson": False,     # no .json file
-            "writethumbnail": True,     # <-- actually download the thumbnail
+            "skip_download": True,
+            "writeinfojson": False,
+            "writethumbnail": True,
             "outtmpl": output_path,
             "quiet": True,
-            'postprocessors': [
-                {
-                    'key': 'FFmpegThumbnailsConvertor',
-                    'format': 'jpg',
-                }
-            ]
+            "postprocessors": [{
+                "key": "FFmpegThumbnailsConvertor",
+                "format": "jpg",
+            }]
         }
     else:
         raise HTTPException(status_code=400, detail="Invalid kind parameter")
 
+    # Download with yt-dlp
     with YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(url, download=True)
 
         if kind == "thumbnail":
-            # yt-dlp saves thumbnail as .jpg or .webp next to outtmpl
+            # Find actual thumbnail path
             thumbnail_path = None
             for ext in ("jpg", "png", "webp"):
                 test_path = output_path.replace("%(ext)s", ext)
                 if os.path.exists(test_path):
                     thumbnail_path = test_path
                     break
+
             if not thumbnail_path:
                 raise HTTPException(
                     status_code=404, detail="Thumbnail not found")
+
             if background_tasks:
                 background_tasks.add_task(cleanup_path, thumbnail_path)
-            return FileResponse(thumbnail_path, filename=os.path.basename(thumbnail_path))
 
-        # otherwise handle video/audio
+            # StreamingResponse for thumbnail (optional but consistent)
+            def iter_thumb():
+                with open(thumbnail_path, "rb") as f:
+                    while chunk := f.read(1024 * 1024):
+                        yield chunk
+
+            return StreamingResponse(
+                iter_thumb(),
+                media_type="image/jpeg",
+                headers={
+                    "Content-Disposition": f'attachment; filename="{os.path.basename(thumbnail_path)}"'
+                },
+            )
+
+        # --- Video or Audio case ---
         filename = ydl.prepare_filename(info)
+
         if background_tasks:
             background_tasks.add_task(cleanup_path, filename)
-        return FileResponse(filename, filename=os.path.basename(filename))
+
+        # Stream file progressively
+        def iterfile():
+            with open(filename, "rb") as f:
+                while chunk := f.read(1024 * 1024):  # 1MB chunks
+                    yield chunk
+
+        # Return a streaming response
+        media_type = "video/mp4" if kind == "video" else "audio/mpeg"
+
+        return StreamingResponse(
+            iterfile(),
+            media_type=media_type,
+            headers={
+                "Content-Disposition": f'attachment; filename="{os.path.basename(filename)}"',
+                "Access-Control-Allow-Origin": "*",
+            },
+        )
 
 
 @app.get("/video-info")
