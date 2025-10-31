@@ -10,7 +10,8 @@ app = FastAPI(title="Youtube Downloader")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # or ["http://localhost:5173"] for security
+    # or ["http://localhost:5173"] for security
+    allow_origins=["https://youtube-downloader-fastapi-react.vercel.app"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
