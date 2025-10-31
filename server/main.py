@@ -6,10 +6,10 @@ from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 from yt_dlp import YoutubeDL
 from dotenv import load_dotenv
+import base64
 load_dotenv()
 
 app = FastAPI(title="Youtube Downloader")
-cookie_path = os.getenv("COOKIE_PATH", "cookies.txt")
 
 app.add_middleware(
     CORSMiddleware,
@@ -79,21 +79,31 @@ def download_video(url: str = Form(...), kind: str = Form("video"), background_t
     os.makedirs(output_dir, exist_ok=True)
     output_path = os.path.join(output_dir, f"{download_id}.%(ext)s")
 
+    encoded_cookies = os.getenv("COOKIE_CONTENT")
+
+    if encoded_cookies:
+        cookies_path = "cookies.txt"
+        with open(cookies_path, "wb") as f:
+            f.write(base64.b64decode(encoded_cookies))
+    else:
+        cookies_path = None  # fallback if not set
+
     if kind == "video":
         ydl_opts = {
+            "cookiefile": cookies_path,
             "format": "bestvideo+bestaudio/best",
             "outtmpl": output_path,
             "quiet": True,
-            "ffmpeg_location": r"D:\Downloads\myDownloads\ffmpeg\bin",
-            "noplaylist": True,
-
+            # "ffmpeg_location": r"D:\Downloads\myDownloads\ffmpeg\bin",
+            "noplaylist": True
         }
     elif kind == "audio":
         ydl_opts = {
+            "cookiefile": cookies_path,
             "format": "bestaudio/best",
             "outtmpl": output_path,
             "quiet": True,
-            "ffmpeg_location": r"D:\Downloads\myDownloads\ffmpeg\bin",
+            # "ffmpeg_location": r"D:\Downloads\myDownloads\ffmpeg\bin",
             "noplaylist": True,
             'postprocessors': [{
                 # tells yt-dlp to run ffmpeg to extract audio from the downloaded file(s).
@@ -112,6 +122,7 @@ def download_video(url: str = Form(...), kind: str = Form("video"), background_t
         }
     elif kind == "thumbnail":
         ydl_opts = {
+            "cookiefile": cookies_path,
             "skip_download": True,      # only download metadata, not video/audio
             "writeinfojson": False,     # no .json file
             "writethumbnail": True,     # <-- actually download the thumbnail
@@ -154,7 +165,18 @@ def download_video(url: str = Form(...), kind: str = Form("video"), background_t
 
 @app.get("/video-info")
 def get_video_info(url: str = Query(..., description="YouTube video URL")):
+
+    encoded_cookies = os.getenv("COOKIE_CONTENT")
+
+    if encoded_cookies:
+        cookies_path = "cookies.txt"
+        with open(cookies_path, "wb") as f:
+            f.write(base64.b64decode(encoded_cookies))
+    else:
+        cookies_path = None  # fallback if not set
+
     ydl_opts = {
+        "cookiefile": cookies_path,
         "quiet": True,
         "skip_download": True,  # <-- Don't download video, just get info
     }
