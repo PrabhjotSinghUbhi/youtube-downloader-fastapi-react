@@ -1,11 +1,5 @@
 import React, { useState } from "react";
-import {
-    Download,
-    Video,
-    Music,
-    Image,
-    Loader2,
-} from "lucide-react";
+import { Download, Video, Music, Image, Loader2 } from "lucide-react";
 import Header from "./Header";
 import { FormatCard } from "./FormatCard";
 import { StatusMessage } from "./StatusMessage";
@@ -96,7 +90,12 @@ function YouTubeDownloader() {
             // Trigger browser download
             const a = document.createElement("a");
             a.href = downloadUrl;
-            a.download = selectedFormat === "video" ? "video.mp4" : selectedFormat === "audio" ? "audio.mp3" : "thumbnail.webp";
+            a.download =
+                selectedFormat === "video"
+                    ? `${videoData?.title}.mp4`
+                    : selectedFormat === "audio"
+                    ? `${videoData?.title}.mp3`
+                    : `${videoData?.title}.webp`;
             document.body.appendChild(a);
             a.click();
             a.remove();
