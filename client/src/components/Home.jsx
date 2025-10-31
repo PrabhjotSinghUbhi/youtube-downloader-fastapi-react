@@ -63,16 +63,15 @@ function YouTubeDownloader() {
         }
 
         setDownloading(true);
-        setStatus(null);
+        setStatus({ type: "info", message: "Starting download..." });
 
         try {
+            // 1️⃣ Start background download
             const formData = new FormData();
             formData.append("url", url);
             formData.append("kind", selectedFormat);
 
-            console.log(formData);
-
-            const response = await fetch(
+            const startResponse = await fetch(
                 `${import.meta.env.VITE_API_BASE}/download`,
                 {
                     method: "POST",
@@ -80,38 +79,85 @@ function YouTubeDownloader() {
                 }
             );
 
-            console.log(response);
+            const startData = await startResponse.json();
+            const downloadId = startData.download_id;
 
-            if (!response.ok) {
-                throw new Error("Download failed");
+            if (!downloadId) {
+                throw new Error("Failed to start download");
             }
 
-            // Convert response to blob (binary data)
-            const blob = await response.blob();
-            const downloadUrl = window.URL.createObjectURL(blob);
+            // 2️⃣ Poll backend for progress every 3 seconds
+            const pollInterval = setInterval(async () => {
+                const statusRes = await fetch(
+                    `${import.meta.env.VITE_API_BASE}/status/${downloadId}`
+                );
+                const data = await statusRes.json();
 
-            // Trigger browser download
-            const a = document.createElement("a");
-            a.href = downloadUrl;
-            a.download =
-                selectedFormat === "video"
-                    ? `${videoData?.title}.mp4`
-                    : selectedFormat === "audio"
-                    ? `${videoData?.title}.mp3`
-                    : `${videoData?.title}.webp`;
-            document.body.appendChild(a);
-            a.click();
-            a.remove();
+                // show progress in UI
+                if (data.status === "downloading") {
+                    setStatus({
+                        type: "info",
+                        message: `Downloading... ${data.progress || "0%"}`,
+                    });
+                }
 
-            URL.revokeObjectURL(downloadUrl);
+                // when finished
+                if (data.status === "finished") {
+                    clearInterval(pollInterval);
+                    setStatus({ type: "info", message: "Preparing file..." });
+
+                    // 3️⃣ Fetch file when ready
+                    const fileResponse = await fetch(
+                        `${
+                            import.meta.env.VITE_API_BASE
+                        }/get-file/${downloadId}`
+                    );
+
+                    if (!fileResponse.ok) {
+                        throw new Error("Failed to fetch file");
+                    }
+
+                    const blob = await fileResponse.blob();
+                    const downloadUrl = window.URL.createObjectURL(blob);
+
+                    // 4️⃣ Trigger browser download
+                    const a = document.createElement("a");
+                    a.href = downloadUrl;
+                    a.download =
+                        selectedFormat === "video"
+                            ? `${videoData?.title || "video"}.mp4`
+                            : selectedFormat === "audio"
+                            ? `${videoData?.title || "audio"}.mp3`
+                            : `${videoData?.title || "thumbnail"}.jpg`;
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+
+                    window.URL.revokeObjectURL(downloadUrl);
+
+                    setStatus({
+                        type: "success",
+                        message: "✅ Download complete!",
+                    });
+                    setDownloading(false);
+                }
+
+                // handle backend errors
+                if (data.status === "error") {
+                    clearInterval(pollInterval);
+                    setStatus({
+                        type: "error",
+                        message: `Error: ${data.error}`,
+                    });
+                    setDownloading(false);
+                }
+            }, 3000);
         } catch (err) {
             console.error(err);
-            alert("Something went wrong during download.");
-        } finally {
+            setStatus({ type: "error", message: "Something went wrong." });
             setDownloading(false);
         }
     };
-
     return (
         <div className="min-h-screen bg-gray-50 ">
             <Header />
