@@ -38,7 +38,7 @@ function YouTubeDownloader() {
         try {
             setLoading(true);
             const resp = await fetch(
-                `http://127.0.0.1:8000/video-info?url=${url}`,
+                `${import.meta.env.VITE_API_BASE}/video-info?url=${url}`,
                 {
                     method: "GET",
                 }
@@ -72,10 +72,13 @@ function YouTubeDownloader() {
 
             console.log(formData);
 
-            const response = await fetch("http://127.0.0.1:8000/download", {
-                method: "POST",
-                body: formData,
-            });
+            const response = await fetch(
+                `${import.meta.env.VITE_API_BASE}/download`,
+                {
+                    method: "POST",
+                    body: formData,
+                }
+            );
 
             console.log(response);
 
