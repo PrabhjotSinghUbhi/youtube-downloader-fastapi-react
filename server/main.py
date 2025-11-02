@@ -29,8 +29,7 @@ app.add_middleware(
 downloads = {}
 downloads_lock = Lock()
 
-if not shutil.which("ffmpeg"):
-    raise RuntimeError("ffmpeg is not installed or not found in PATH")
+print("FFMPEG PATH:", shutil.which("ffmpeg"))
 
 @app.get("/", response_class=HTMLResponse)
 def root():
