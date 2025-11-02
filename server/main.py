@@ -84,6 +84,8 @@ def background_download(download_id: str, url: str, kind: str):
             cookies_path = "cookies.txt"
             with open(cookies_path, "wb") as f:
                 f.write(base64.b64decode(encoded_cookies))
+        else:
+            print("⚠️ No cookies — downloading anonymously (limited quality).")
 
         # --- Select download type ---
         if kind == "video":
