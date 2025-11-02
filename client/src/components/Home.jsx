@@ -151,7 +151,7 @@ function YouTubeDownloader() {
                     });
                     setDownloading(false);
                 }
-            }, 3000);
+            }, 1000);
         } catch (err) {
             console.error(err);
             setStatus({ type: "error", message: "Something went wrong." });
